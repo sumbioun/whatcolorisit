@@ -1,0 +1,160 @@
+/*
+        ••• What color is it? •••
+
+------- A clock that changes colors progressively with the passing of time (en)
+------- Um relógio que muda de cor progressivamente com o passar do tempo (pt)
+
+        Version: 0.1 beta (.js)
+    Release date of this version: December 29th 2014
+    
+        Acknowledgements:
+          This software is based on What color is it, a project by http://scn9a.org/
+          This version implements a different algorithm to translate time into colors
+          The original project can be found here: http://whatcolourisit.scn9a.org/
+
+_______ Developed by: SUMBIOUN [at http://sumbioun.org/]
+_______ Programmer: pedro veneroso [at http://pedroveneroso.com/]
+_______ Get in contact at people@sumbioun.org
+
+        License: GNU GPL v3.0
+    Read the license at:
+    http://sumbioun.org/licenses/gnu-v3_0.txt
+
+    Indie software sketch developed in December, 2014
+    Belo Horizonte, Brasil
+
+    at http://whatcolorisit.sumbioun.com/
+    
+    Free to copy, modify and distribute.
+    
+*/
+
+// bind to jacascript
+interface JavaScript {
+  void return_time(String sendTime);
+  void return_hex(String sendHex);
+  void return_color(int tR, int tG, int tB);
+}
+
+void bindJavascript(Javascript js){
+  javascript = js;
+}
+
+Javascript javascript;
+
+int h, m, s;
+float currentS, totalS; // current number of seconds and total number of seconds in a day, respectively
+int totalC;
+int cR, cG, cB;
+int counterB, counterR, counterG, nextSec;
+String hexColor, thisTime;
+
+float angle1, angleModulationB, angleModulationG, angleModulationR;
+
+void setup(){
+  size(1,1);
+  totalS = (int)(24*60*60); // total number of seconds in a day
+  totalC = (int)(256*256*256); // total number of colors
+  nextSec = second();
+}
+
+void draw(){
+  if(counterB < 60){ // modulation of blue value
+    counterB++;
+  }
+  else{
+    counterB = 0;
+  }
+  if(counterG < 120){ // modulation of green value
+    counterG++;
+  }
+  else{
+    counterG = 0;
+  }
+  if(counterR < 180){ // modulation of red value
+    counterR++;
+  }
+  else{
+    counterR = 0;
+  }
+  h = hour();
+  m = minute();
+  s = second();
+  currentS = (h*60*60)+(m*60)+s; // current number of seconds today
+  angle1 = (currentS*360)/totalS; // convert seconds in angle
+  angleModulationB = ((counterB+1)*360)/60; // angle to modulate the blue value of the current hue
+  angleModulationG = ((counterG+1)*360)/120; // angle to modulate the green value of the current hue
+  angleModulationR = ((counterR+1)*360)/180; // angle to modulate the red value of the current hue
+  float sModB = sin(radians(angleModulationB)); // convert angle of modulation to sine
+  float sModG = sin(radians(angleModulationG)+(PI/2));
+  float sModR = sin(radians(angleModulationR)-(PI/6));
+  float sB = sin(radians(angle1)+(PI/2)); // convert angle that defines the current hue to sine
+  float sG = sin(radians(angle1)-(PI/6));
+  float sR = sin(radians(angle1)-((5*PI)/6));
+  float angleK = (currentS*360)/(totalS); // convert seconds in angle for luminosity modulation
+  float sK = sin(radians(angleK)-(PI/2));
+  cB = (int)(convert_sine_to_color(sB, sModB));
+  cG = (int)(convert_sine_to_color(sG, sModG));
+  cR = (int)(convert_sine_to_color(sR, sModR));
+  cB = (int)(adapt_lum(cB, convert_sine_to_lum(sK)));
+  cG = (int)(adapt_lum(cG, convert_sine_to_lum(sK)));
+  cR = (int)(adapt_lum(cR, convert_sine_to_lum(sK)));
+  fill(cR, cG, cB); // draws the color as the background of the sketch
+  noStroke();
+  rect(0, 0, width, height);
+  
+  String ho = nf(h, 2); // creates a String with current time
+  String mi = nf(m, 2);
+  String se = nf(s, 2);
+  thisTime = ho + ":" + mi + ":" + se;
+  
+  if(second() == nextSec){ // updates, once every second, the String containing hex value of the current color
+    color colore = color(cR, cG, cB);
+    String tHex = hex(colore);
+    char[] ttHex = new String[7];
+    ttHex[0] = "#";
+    for(int i = 0; i < 6; i++){
+      char tempChar = tHex.charAt(2+i);
+      ttHex[i+1] = tempChar.toString();
+    }
+    hexColor = join(ttHex, "");
+    nextSec++;
+    if(nextSec >=60){
+      nextSec = 0;
+    }
+  }
+  
+  if(javascript != null){ // interfaces with javascript to send values that allow the page to be drawn
+    javascript.return_time(thisTime);
+    javascript.return_hex(hexColor);
+    javascript.return_color(cR, cG, cB);
+  }
+}
+
+float convert_sine_to_color(float s1, float m1){ // function to convert sine to color
+  float thisColor1 = 0;
+  float colorMod = map(m1, -1, 1, -0.1171875, 0.1171875);
+  float tempSine1 = s1+colorMod;
+  if(tempSine1 > 1){
+    tempSine1 = 1;
+  }
+  else if(tempSine1 < -1){
+    tempSine1 = -1;
+  }
+  tempSine1 = map(tempSine1, -1, 1, 0, 1);
+  thisColor1 = tempSine1*255;
+  return thisColor1;
+}
+
+float convert_sine_to_lum(float s2){ // function to convert sine to luminosity
+  float thisColor2 = 0;
+  float tempSine2 = s2;
+  tempSine2 = map(tempSine2, -1, 1, 0.078125, 1);
+  thisColor2 = tempSine2 * 255;
+  return thisColor2;
+}
+
+float adapt_lum(float col1, float k1){ // function to adapt current color according to maximum luminosity
+  float tempColor3 = map(col1, 0, 255, 0, k1);
+  return tempColor3;
+}
