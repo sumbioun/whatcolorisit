@@ -16,9 +16,9 @@ whatcolorisit
           This version implements a different algorithm to translate time into colors
           The original project can be found here: http://whatcolourisit.scn9a.org/
 
-_______ Developed by: SUMBIOUN [at http://sumbioun.org/]
-_______ Programmer: pedro veneroso [at http://pedroveneroso.com/]
-_______ Get in contact at people@sumbioun.org
+------- Developed by: SUMBIOUN [at http://sumbioun.org/]
+------- Programmer: pedro veneroso [at http://pedroveneroso.com/]
+------- Get in contact at people@sumbioun.org
 
         License: GNU GPL v3.0
     Read the license at:
